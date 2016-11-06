@@ -2,26 +2,41 @@
 import os, shutil, datetime, csv
 import xlrd
 import ghostscript
-from wand.image import Image
+#from wand.image import Image
+from PIL import Image
 
 one_slice = .4
 two_slice = .6
+threshold = .08
 
-input_path = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\LibraryScans\\Input\\Scans_via_Library_copy"
+#input_path = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\LibraryScans\\Input\\Scans_via_Library_copy"
+input_path_1 = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\raw_data_copies\\Scans_via_Library_tiff\\Digital Scanning 5029-3"
+input_path_2 = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\raw_data_copies\\Scans_via_Library_tiff\\Digital Scanning 5029-6"
+input_path_3 = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\raw_data_copies\\Scans_via_Library_tiff\\Reels 123-149"
+
+input_path_list = [input_path_1, input_path_2, input_path_3]
+
+#NOTE: Jeremy Rolls in input folder, I deleted not for dir issue, and turned Kanasas territory into Kansas
 excel_path_1 = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\LibraryScans\\Input\\Scans_via_Library_copy\\Batch_1\\Jeremy rolls.xlsx"
-excel_path_2 = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\raw_data_copies\\Scans_via_Library\\Batch 2 PDF Files\\Inventory List Invoice 5297.xls"
-output_path = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\LibraryScans\\Output"
+excel_path_2 = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\raw_data_copies\\Scans_via_Library_tiff\\Digital Scanning 5029-6\\jeremy_rolls_batch_2.xlsx"
+excel_path_3 = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\raw_data_copies\\Scans_via_Library_tiff\\Reels 123-149\\vendor092816andvendor101816.xlsx"
+
+excel_path_list = [excel_path_1, excel_path_2, excel_path_3]
+
+#output_path = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\LibraryScans\\Output"
+output_path = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\LibraryScans\\Output_tiff"
+
 temp_path = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\LibraryScans\\Temp"
 
 test_input = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\LibraryScans\\Input\\Scans_via_Library_copy\\Batch_1\\batch 1 pdf"
 
-states = {'california': 'CA', 'alabama': 'AL', 'colorado': 'CO','connecticut': 'CT', 'delaware': 'DE', 'dc': 'dc', 'florida': 'FL', 'georgia':'GA', 'kentucky': 'KY', 
+states = {'california': 'CA', 'alabama': 'AL', 'arkansas': 'AR', 'colorado': 'CO','connecticut': 'CT', 'delaware': 'DE', 'dc': 'dc', 'florida': 'FL', 'georgia':'GA', 'kentucky': 'KY', 
 'illinois': 'IL', 'indiana': 'IN', 'iowa': 'IA', 'kansas':'KS', 'louisiana': 'LA', 'maine': 'ME', 'maryland': 'MD', 'massachusetts': 'MA', 'michigan': 'MI', 
-'minnesota': 'MN', 'mississippi': 'MS', 'nebraska':'NE', 'new hampshire': 'NH', 'new jersey': 'NJ', 'new york':'NY', 'north carolina':'NC', 'ohio':'OH', 
+'minnesota': 'MN', 'mississippi': 'MS', 'montana': 'MT','nebraska':'NE', 'new hampshire': 'NH', 'new jersey': 'NJ', 'new york':'NY', 'north carolina':'NC', 'ohio':'OH', 
 'pennsylvania' : 'PA', 'south carolina': 'SC', 'tennessee': 'TN', 'texas': 'TX', 'vermont': 'VT', 'virginia': 'VA', 'washington': 'WA', 'west virginia': 'WV', 
 'wisconsin': 'WI'}
 
-remove = ['.dropbox', 'desktop.ini']
+remove = ['.dropbox', 'desktop.ini', 'Thumbs.db']
 no_excel = ['.xls', '.xlsx']
 not_for_dir = ['?']
 
@@ -57,6 +72,7 @@ def get_info(old_dictionary, current_path, new_dictionary):
 	#print(keys)
 	if 'root' in list(old_dictionary.values()):
 		for key in keys:
+			#print(key)
 			#Roll 17 PDF folder in rework batch folder - not sure why it exists; that's why the line is needed
 			#if os.path.isdir(current_path + "\\" + key) == False:
 				#print(key, 'path:', current_path + "\\" + key)
@@ -67,11 +83,13 @@ def get_info(old_dictionary, current_path, new_dictionary):
 				get_info(old_dictionary[key], next_path, new_dictionary)
 				continue
 				#take out Roll from file name
+			if key == 'Thumbs.db':
+				continue
 			if "Roll" in key:
 				decomp = key.split('Roll', 1)[1]
 			else:
-				if key == 'DSI Invoice 5301 Inventory.pdf':
-					continue
+				#if key == 'DSI Invoice 5301 Inventory.pdf':
+					#continue
 				decomp = key.split('Reel', 1)[1]
 			decomp2 = decomp.split('_')
 				#print(decomp2)
@@ -80,6 +98,9 @@ def get_info(old_dictionary, current_path, new_dictionary):
 				#file_num = decomp2[1].split(".")[0]
 			file_num = decomp2[1]
 				#print(file_num)
+			need_zero = 4 - len(roll_num)
+			roll_num = '0' * need_zero + roll_num
+			#print(roll_num)
 			if roll_num not in new_dictionary:
 				new_dictionary[roll_num] = {}
 			new_dictionary[roll_num][file_num] = old_path    
@@ -117,16 +138,20 @@ def populate(new_dictionary, excel_path, csv_sheet, skip_line):
 				print('Process Complete')
 				return
 			roll_num, State, County, Date = int(float(row[0])), row[2].lower(), row[3], row[4]
-			if State == 'kansas territory':
-				State = 'kansas'
+			no_zero = 4 - len(str(roll_num))
+			roll_num = '0'*no_zero + str(roll_num)
+			#print(roll_num)
+			#if State == 'kansas territory':
+				#State = 'kansas'
 			Date = Date.split(".")[0]
 
-			dir_list = [State, Date, County]
-			for i in range(len(dir_list)):
-				for j in not_for_dir:
-					if dir_list[i].endswith(j):
+			#dir_list = [State, Date, County]
+			dir_list = [State, Date]
+			#for i in range(len(dir_list)):
+				#for j in not_for_dir:
+					#if dir_list[i].endswith(j):
 						#print(j)
-						dir_list[i] = 'Unknown'
+						#dir_list[i] = 'Unknown'
 			#new_dir = output_path
 			
 			#for i in dir_list:
@@ -139,7 +164,7 @@ def populate(new_dictionary, excel_path, csv_sheet, skip_line):
 						#print("\nOh man, you have a file not found error (race condition)\n")
 			
 			if str(roll_num) in list(new_dictionary.keys()):
-				#print(keys)
+				#print(roll_num)
 				keys = list(new_dictionary[str(roll_num)].keys())
 				new_dir = output_path
 				for i in dir_list:
@@ -153,18 +178,38 @@ def populate(new_dictionary, excel_path, csv_sheet, skip_line):
 				for key in keys:
 					old_path = new_dictionary[str(roll_num)][key]
 					#print(old_path)
-					new_path = new_dir + "\\" + "_".join([states[State], Date, key])
+					new_path = new_dir + "\\" + "_".join([states[State], Date, County, key, 'L'])
 					#print('old path:\n', old_path, 'new_path\n', new_path)
 					
 					#shutil.copy(old_path, new_path)
+
 					format_img(old_path, new_path)
 
+def format_img(old_path, new_path):
+	img = Image.open(old_path)
+	width, height  = img.size
+	if width > height and abs(float(width - height))/float(height) > threshold:
+		transfer_path = new_path.rsplit("\\", 1)
+		filename, filetype = os.path.splitext(transfer_path[1])
 
+		width_one = one_slice * width
+		width_two = two_slice * width
+		image_one, image_two = img, img
+		if os.path.isfile(transfer_path[0] + "\\" + filename + '_' + '2half' + '.jpg') == False:
+			image_one.crop((int(width_one), 0, width, height)).save(transfer_path[0] + "\\" + filename + '_' + '2half' + '.jpg')
+			image_two.crop((0, 0, int(width_two), height)).save(transfer_path[0] + "\\" + filename + '_' + '1half' + '.jpg')
+	else: 
+		file_path, filetype = os.path.splitext(new_path)
+		if os.path.isfile(file_path + '.jpg') == False:
+			img.save(file_path + '.jpg')
+
+'''
 def format_img(old_path, new_path):
 	with Image(filename = old_path) as img:
 		width = img.width
 		height = img.height
-		if width > height: #this is just a baseline criteria for determining if doc has two pages
+		#if width > height: #this is just a baseline criteria for determining if doc has two pages
+		if width > height and float(width - height)/float(height) > threshold:
 			img.format = 'jpeg'
 			width_one = one_slice * width
 			width_two = two_slice * width
@@ -180,7 +225,7 @@ def format_img(old_path, new_path):
 			file_path, filetype = os.path.splitext(new_path)
 			img.save(filename = file_path + '.jpg')
 			#shutil.copy(old_path, new_path)
-
+'''
 ####################################################csv_write and csv_dict have been moved to general code###################################################################
 '''
 def csv_write(dictionary, package_path):
@@ -219,11 +264,12 @@ def csv_dict(current_path, package_path, dictionary):
 
 ######################################################################
 if __name__ == '__main__':
-	dictionary = collect(input_path)
-	new_dictionary = get_info(dictionary, input_path, {})
+	#for i in range(len(input_path_list)):
+	dictionary = collect(input_path_list[1])
+	new_dictionary = get_info(dictionary, input_path_list[1], {})
 	#print(dictionary, new_dictionary)
-	#populate(new_dictionary, excel_path_1, 'Sheet1', 1)
-	populate(new_dictionary, excel_path_2, 'Sheet1', 3)
+	populate(new_dictionary, excel_path_list[1], 'Sheet1', 1)
+	#populate(new_dictionary, excel_path_2, 'Sheet1', 3)
 
 
 
