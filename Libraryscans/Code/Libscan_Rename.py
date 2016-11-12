@@ -17,11 +17,11 @@ input_path_3 = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\raw_data_copies\\S
 input_path_list = [input_path_1, input_path_2, input_path_3]
 
 #NOTE: Jeremy Rolls in input folder, I deleted not for dir issue, and turned Kanasas territory into Kansas
-excel_path_1 = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\LibraryScans\\Input\\Scans_via_Library_copy\\Batch_1\\Jeremy rolls.xlsx"
-excel_path_2 = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\raw_data_copies\\Scans_via_Library_tiff\\Digital Scanning 5029-6\\jeremy_rolls_batch_2.xlsx"
-excel_path_3 = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\raw_data_copies\\Scans_via_Library_tiff\\Reels 123-149\\vendor092816andvendor101816.xlsx"
+excel_path_1 = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\LibraryScans\\Temp\\Jeremy rolls_edited.xlsx"
+#excel_path_2 = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\LibraryScans\\Temp\\jeremy_rolls_batch_2_edited.xlsx"
+excel_path_3 = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\LibraryScans\\Temp\\batch3_edited.xlsx"
 
-excel_path_list = [excel_path_1, excel_path_2, excel_path_3]
+excel_path_list = [excel_path_1, excel_path_1, excel_path_3]
 
 #output_path = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\LibraryScans\\Output"
 output_path = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\LibraryScans\\Output_tiff"
@@ -90,7 +90,7 @@ def get_info(old_dictionary, current_path, new_dictionary):
 			else:
 				#if key == 'DSI Invoice 5301 Inventory.pdf':
 					#continue
-				decomp = key.split('Reel', 1)[1]
+				decomp = key.split('Reel ', 1)[1]
 			decomp2 = decomp.split('_')
 				#print(decomp2)
 			roll_num = decomp2[0]
@@ -134,9 +134,13 @@ def populate(new_dictionary, excel_path, csv_sheet, skip_line):
 		for row in file:
 			#print(row)
 			#print(row)
-			if row[0] == '':
+			#if row[0] == '':
+			#print(row)
+			if row == ['', '', '', '', '']:
 				print('Process Complete')
 				return
+			if row[0] == '':
+				continue
 			roll_num, State, County, Date = int(float(row[0])), row[2].lower(), row[3], row[4]
 			no_zero = 4 - len(str(roll_num))
 			roll_num = '0'*no_zero + str(roll_num)
@@ -265,10 +269,10 @@ def csv_dict(current_path, package_path, dictionary):
 ######################################################################
 if __name__ == '__main__':
 	#for i in range(len(input_path_list)):
-	dictionary = collect(input_path_list[1])
-	new_dictionary = get_info(dictionary, input_path_list[1], {})
+	dictionary = collect(input_path_list[0])
+	new_dictionary = get_info(dictionary, input_path_list[0], {})
 	#print(dictionary, new_dictionary)
-	populate(new_dictionary, excel_path_list[1], 'Sheet1', 1)
+	populate(new_dictionary, excel_path_list[0], 'Sheet1', 1)
 	#populate(new_dictionary, excel_path_2, 'Sheet1', 3)
 
 
