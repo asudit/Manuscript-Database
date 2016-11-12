@@ -11,6 +11,9 @@ MO_output_final = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_data
 
 lib_scan_output = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\LibraryScans\\Output"
 lib_scan_output_final = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\LibraryScans\\Output_final"
+lib_scan_output_tiff = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\LibraryScans\\Output_tiff"
+#MN_1850 = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\LibraryScans\\Output_pdf_incomplete\\minnesota"
+NH_rename_path = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\LibraryScans\\Output_tiff\\new hampshire\\1870_rename"
 
 test = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\General\\Make_csv_rename_test"
 
@@ -22,7 +25,7 @@ output_path_final_list = [ancestry_output_final, MO_output_final, lib_scan_outpu
 package_list = ['Ancestry', 'MO', 'Library_Scans']
 file_stamp = ['A', 'S', 'L']
 
-csv_header = ['State', 'Year', 'File', 'County', 'RA_name', 'bad_cut', 'empty', 'Schedule', 'page_no', 'estab_count', 'line_count', 'legibility', 'totals_incl', 'Notes']
+csv_header = ['State', 'Year', 'File', 'County', 'RA_name', 'bad_cut', 'empty', 'Schedule', 'page_no', 'estab_count', 'legibility', 'totals_incl', 'Notes']
 
 
 
@@ -45,7 +48,7 @@ def csv_dict(current_path, output_path, dictionary):
 	if os.path.isdir(current_path) == False: 
 		rel_path = os.path.relpath(current_path, output_path) # output_path is a global variable 
 		split = rel_path.split("\\")
-		#print(split)
+		print(split)
 		if len(split) <= 2:
 			pass
 		else:
@@ -74,13 +77,30 @@ def rename(output_path, stamp):
 		filename, filetype = os.path.splitext(output_path)
 		new_name = filename + "_" + stamp + filetype
 		if filename.endswith("_" + stamp) == False:
-			#print(output_path)
+			#print(output_path, new_name)
 			os.rename(output_path, new_name)
 	else: 
 		folder_contents = os.listdir(output_path)
 		for element in folder_contents:
 			next_path = output_path + "\\" + element
 			rename(next_path, stamp)
+
+def rename_NH(input_path, county, year):
+	files = os.listdir(input_path)
+	for file in files:
+		old_dir = input_path + "\\" + file
+		#print(old_dir)
+		meta = file.split("_")
+		#print(meta)
+		if len(meta) == 6:
+			new_file = "_".join(['NH', year, county, meta[-3], meta[-2], meta[-1]])
+		else:
+			new_file = "_".join(['NH', year, county, meta[-2], meta[-1]])
+		new_dir = input_path + "\\" + new_file
+		#print(old_dir, new_dir, '\n')
+		if old_dir != new_dir:
+			os.rename(old_dir, new_dir)
+
 
 # :( :( :(
 def no_county_folder(current_path, input_path, output_path_final):
@@ -115,14 +135,18 @@ def no_county_folder(current_path, input_path, output_path_final):
 
 ######################################################################
 if __name__ == '__main__':
+	rename_NH(NH_rename_path, 'Belknap-Cheshire', '1870')
+
 	#dictionario = csv_dict(test, test, {})
 	#csv_write(dictionario, package_path, 'test')
-	#rename(test, 'T')	
+	#rename(lib_scan_output_tiff, 'L')	
+	#dictionario = csv_dict(lib_scan_output_tiff, lib_scan_output_tiff, {})
+	#csv_write(dictionario, package_path, package_list[2])
 	
-	for i in range(len(package_list)):
+	#for i in range(len(package_list)):
 		#dictionario = csv_dict(output_path_list[i], output_path_list[i], {})
 		#csv_write(dictionario, package_path, package_list[i])
 		#rename(output_path_list[i], file_stamp[i])
-		no_county_folder(output_path_list[i], output_path_list[i], output_path_final_list[i])
-		print(package_list[i], 'complete')
+		#no_county_folder(output_path_list[i], output_path_list[i], output_path_final_list[i])
+		#print(package_list[i], 'complete')
 	
