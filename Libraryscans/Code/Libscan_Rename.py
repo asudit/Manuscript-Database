@@ -83,7 +83,7 @@ def get_info(old_dictionary, current_path, new_dictionary):
 				get_info(old_dictionary[key], next_path, new_dictionary)
 				continue
 				#take out Roll from file name
-			if key == 'Thumbs.db':
+			if key == 'Thumbs.db' or key == 'Reel 5_000295.tif' or key == 'Reel 5_000296.tif': #corrupted CA files in roll 5
 				continue
 			if "Roll" in key:
 				decomp = key.split('Roll', 1)[1]
