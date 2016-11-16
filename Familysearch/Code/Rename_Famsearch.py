@@ -6,10 +6,19 @@
 
 #Run time: < 1 s
 
-import os, shutil, datetime
+import os, shutil, datetime, csv
+import xlrd
+import ghostscript
+#from wand.image import Image
+from PIL import Image
 
-input_path = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\Familysearch\\Input\\microfilm_copy"
-output_path = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\Familysearch\\Output"
+one_slice = .4
+two_slice = .6
+threshold = .08
+
+#input_path = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\Familysearch\\Input\\microfilm_copy"
+input_path = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\raw_data_copies\\Familysearch_scans\\microfilm"
+output_path = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\Familysearch\\Output_final"
 temp_path = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\Familysearch\\Temp"
 
 test_input = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\Familysearch\\Input\\microfilm_copy\\arkansas_1549733_item2.tif"
@@ -51,12 +60,12 @@ def collect(input_path):
 
 def populate(dictionary, current_path):
 	keys = list(dictionary.keys())
-	print(keys)
+	#print(keys)
 	if 'root' in list(dictionary.values()):
 		for key in keys:
 			old_path = current_path + "\\" + key
 			if os.path.isdir(old_path):
-				print(old_path)
+				#print(old_path)
 				next_path = old_path
 				populate(dictionary[key], next_path)
 				continue
@@ -86,7 +95,7 @@ def populate(dictionary, current_path):
 			#if 'tuscarawas' in decomp[2]:
 				#decomp[2] = 'tuscarawas'
 			new_path = output_path
-			for piece in meta_list[:-1]:
+			for piece in [state, year]:
 				new_path = new_path + "\\" + piece
 				if os.path.isdir(new_path) == False:
 					os.makedirs(new_path)
@@ -94,9 +103,10 @@ def populate(dictionary, current_path):
 			#print(num)
 			file_num_final = '0' * ( 5 - len(num[0])) + file_num
 			#print(file_num_final)
-			file = "_".join([state_abbrev[state],year[2], county, file_num_final])
+			file = "_".join([state_abbrev[state],year, county, file_num_final])
 			new_path = new_path + "\\" + file
-			shutil.copy(old_path, new_path)
+			#shutil.copy(old_path, new_path)
+			format_img(old_path, new_path)
 	else:
 		for key in keys:
 			next_path = current_path + "\\" + key
@@ -104,6 +114,23 @@ def populate(dictionary, current_path):
 				populate(dictionary[key], next_path)
 
 
+def format_img(old_path, new_path):
+	img = Image.open(old_path)
+	width, height  = img.size
+	if width > height and abs(float(width - height))/float(height) > threshold:
+		transfer_path = new_path.rsplit("\\", 1)
+		filename, filetype = os.path.splitext(transfer_path[1])
+
+		width_one = one_slice * width
+		width_two = two_slice * width
+		image_one, image_two = img, img
+		if os.path.isfile(transfer_path[0] + "\\" + filename + '_' + '2half' + '.jpg') == False:
+			image_one.crop((int(width_one), 0, width, height)).save(transfer_path[0] + "\\" + filename + '_' + '2half' + "_F" + '.jpg')
+			image_two.crop((0, 0, int(width_two), height)).save(transfer_path[0] + "\\" + filename + '_' + '1half' + "_F" + '.jpg')
+	else: 
+		file_path, filetype = os.path.splitext(new_path)
+		if os.path.isfile(file_path + "_F" + '.jpg') == False:
+			img.save(file_path + "_F" + '.jpg')
 
 
 def check(dictionario, check_path):
@@ -165,6 +192,7 @@ if __name__ == '__main__':
 	#missing_counties = check(dictionary, temp_path + "\\" + 'year_state_county_list.csv')
 	#missing_csv(temp_path + "\\" + 'Family_Scan_MissingCounties.csv', missing_counties)
 	populate(dictionary, input_path)
+
 
 
 
