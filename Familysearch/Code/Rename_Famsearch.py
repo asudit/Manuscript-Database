@@ -117,6 +117,10 @@ def populate(dictionary, current_path):
 def format_img(old_path, new_path):
 	img = Image.open(old_path)
 	width, height  = img.size
+	#in two folders, the images are oriented the wrong way
+	if 'ohio_1602337.tif' in old_path or 'ohio_16024422.tif' in old_path:
+		img2 = img.rotate(90, expand = True) #expand prevents cropping of rotated image
+		img = img2
 	if width > height and abs(float(width - height))/float(height) > threshold:
 		transfer_path = new_path.rsplit("\\", 1)
 		filename, filetype = os.path.splitext(transfer_path[1])
