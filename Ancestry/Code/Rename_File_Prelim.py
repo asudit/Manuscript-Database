@@ -13,11 +13,11 @@
 import os, shutil, datetime, sys
 import csv, wand
 #sys.path.insert(0, "C:\\Program Files\\ImageMagick-7.0.3-Q16")
-from wand.image import Image #once Wand is installed on both computers
-
+from PIL import Image
 
 one_slice = .4
 two_slice = .6
+threshold = .08
 
 input_path = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\ancestry\Input\\ancestry_downloads_copy"
 output_path = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\ancestry\\Output"
