@@ -1,7 +1,11 @@
 import os, shutil, datetime, sys
 import csv, wand
 
-from wand.image import Image 
+#from wand.image import Image 
+from PIL import Image
+
+shrink_factor = .2
+quality_factor = 65
 
 ancestry_output = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\ancestry\\Output"
 ancestry_output_final = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\ancestry\\Output_final"
@@ -14,10 +18,13 @@ lib_scan_output_final = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscrip
 lib_scan_output_tiff = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\LibraryScans\\Output_tiff"
 #MN_1850 = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\LibraryScans\\Output_pdf_incomplete\\minnesota"
 NH_rename_path = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\LibraryScans\\Output_tiff\\new hampshire\\1870_rename"
+Famsearch_output = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\Familysearch\\Output_final"
+Nara_texas_output = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\Nara_texas\\Output"
 
 test = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\General\\Make_csv_rename_test"
+package_test = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\LibraryScans\\Output_tiff\\alabama"
 
-package_path = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\General\\Packages"
+package_folder = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\General\\metadata_collection"
 
 remove = ['desktop.ini', '.dropbox']
 output_path_list = [ancestry_output, MO_output, lib_scan_output]
@@ -25,43 +32,92 @@ output_path_final_list = [ancestry_output_final, MO_output_final, lib_scan_outpu
 package_list = ['Ancestry', 'MO', 'Library_Scans']
 file_stamp = ['A', 'S', 'L']
 
+states = {'california': 'CA', 'alabama': 'AL', 'arkansas': 'AR', 'colorado': 'CO','connecticut': 'CT', 'delaware': 'DE', 'dc': 'dc', 'florida': 'FL', 'georgia':'GA', 'kentucky': 'KY', 
+'illinois': 'IL', 'indiana': 'IN', 'iowa': 'IA', 'kansas':'KS', 'louisiana': 'LA', 'maine': 'ME', 'maryland': 'MD', 'massachusetts': 'MA', 'michigan': 'MI', 
+'minnesota': 'MN', 'mississippi': 'MS', 'montana': 'MT','nebraska':'NE', 'new hampshire': 'NH', 'new jersey': 'NJ', 'new york':'NY', 'north carolina':'NC', 'ohio':'OH', 
+'pennsylvania' : 'PA', 'south carolina': 'SC', 'tennessee': 'TN', 'texas': 'TX', 'vermont': 'VT', 'virginia': 'VA', 'washington': 'WA', 'west virginia': 'WV', 
+'wisconsin': 'WI'}
+
 csv_header = ['State', 'Year', 'File', 'County', 'RA_name', 'bad_cut', 'empty', 'Schedule', 'page_no', 'estab_count', 'legibility', 'totals_incl', 'Notes']
 
 
 
-def csv_write(dictionary, package_path, source):
+def csv_write(dictionary, package_folder, stamp):
+	'''
+	This function takes a dictionary from csv_dict function, a desired output
+	folder in the metadata collection folder, and a stamp, which is a letter code indicating
+	the source of the files
+	'''
+
 	keys = list(dictionary.keys())
+	#print(keys)
 	for tup in keys:
+		state, year = tup[0], tup[1]
+		#print(state, year)
 		csv_list = dictionary[tup]
-		filename = package_path + "\\" + source + "\\" + tup[0] + "\\" + tup[1]
-		os.makedirs(filename)
-		with open(filename + "\\" + 'Package.csv', 'wb') as f:
+		csv_folder = package_folder + "\\" + 'Csv_Folder'
+		
+		if os.path.isdir(csv_folder) == False:
+			os.makedirs(csv_folder)
+		csv_file = csv_folder + "\\" + "_".join([state, year, stamp, 'metadata.csv'])
+		#print('hey!',csv_folder)
+		#print(csv_file, state)
+		if os.path.isfile(csv_file):
+			os.remove(csv_file)
+		with open(csv_file, 'wb') as f:
 			writer = csv.writer(f)
 			writer.writerow(csv_header)
 			for row in csv_list:
+				#print(row)
 				#with open(filename, 'w', newline = '') as f: # Python 2.7 complains with new line arg
 				#writer.writerow(['File Name', 'Current path', 'County (if given)'])
 				writer.writerow(row)
 
 
 def csv_dict(current_path, output_path, dictionary):
+	'''
+	This function takes a year-state folder with files, which is intended to be
+	packaged into the metadata collection folder. Note that current path and output path are the same folder,
+	when the function is called initially. Dictionary is an empty dictionary
+	'''
+	
+
 	if os.path.isdir(current_path) == False: 
-		rel_path = os.path.relpath(current_path, output_path) # output_path is a global variable 
-		split = rel_path.split("\\")
-		print(split)
+		#print(current_path)
+		#just Nara
+		#rel_path = os.path.relpath(current_path, output_path) # output_path is a global variable 
+		#state = 'TX'
+		#year = '8'
+		#meta = [state, year, rel_path]
+			#
+		#if state != 'Csv':
+			#if (state, year) not in dictionary:
+				#dictionary[(state, year)] = []
+			#dictionary[(state, year)].append(meta)
+		#just Nara
+		
+		#print(rel_path)
+		split = rel_path.split("_")
+		#print(split)
 		if len(split) <= 2:
 			pass
 		else:
 			if len(split) == 3:
 				state, year, file_num = split[0], split[1], split[2]
 				meta = [state, year, file_num]
-			elif len(split) ==4:
-				state, year, county, file_num = split[0], split[1], split[2], split[3]
-				meta = [state, year, file_num, county]
+				#print(meta)
+			elif len(split) >= 4:
+				state, year, county = split[0], split[1], split[2]
+				meta = [state, year, rel_path, county]
 
-			if (state, year) not in dictionary:
-				dictionary[(state, year)] = []
-			dictionary[(state, year)].append(meta)
+				#print(meta)
+			
+			
+			if state != 'Csv':
+				if (state, year) not in dictionary:
+					dictionary[(state, year)] = []
+				dictionary[(state, year)].append(meta)
+				
 	else:
 		folder_contents = os.listdir(current_path)
 		for element in folder_contents:
@@ -71,13 +127,20 @@ def csv_dict(current_path, output_path, dictionary):
 
 
 def rename(output_path, stamp):
+	'''
+	This function will "stamp" every file in the folder that is passed in as the output_path parameter.
+	By stamp, I mean append a one letter code indicating the source of the file to the filename of every file
+	'''
+
 	if '.dropbox' in output_path or 'desktop.ini' in output_path:
 		pass
 	elif os.path.isdir(output_path) == False:
 		filename, filetype = os.path.splitext(output_path)
 		new_name = filename + "_" + stamp + filetype
-		if filename.endswith("_" + stamp) == False:
-			#print(output_path, new_name)
+		if os.path.isfile(new_name) and os.path.isfile(output_path):
+			os.remove(output_path)
+		elif filename.endswith("_" + stamp) == False:
+			print('old: %s new: %s', output_path, new_name)
 			os.rename(output_path, new_name)
 	else: 
 		folder_contents = os.listdir(output_path)
@@ -131,22 +194,64 @@ def no_county_folder(current_path, input_path, output_path_final):
 			next_path = current_path + "\\" + element
 			no_county_folder(next_path, input_path, output_path_final)
 
+def package(input_path, current_path, output_path, stamp):
+	'''
+	This function is intended to take a general output folder for some file source as input, 
+	and output a prepared package into the metadata collection folder. Usually, input_path will be an output folder
+	in one of the source folders in manuscript database folder, like output_tiff or output_final. Input_path=current_path when func is called
+	Output_path is usally the metadata collection folder
+	'''
+	if os.path.isdir(current_path) == False:
+		rel_path = os.path.relpath(current_path, input_path) 
+		
+		file = rel_path.split("\\")
+		
+		meta = file[1].split("_")
+		state, year = meta[0], meta[1]
+		#just for NARA
+		#state = 'TX'
+		#year = '1880'
+		package_folder = output_path + "\\" + state + year + "_" + stamp
+		if os.path.isdir(package_folder) == False:
+			os.makedirs(package_folder)
+		
+		new_path = package_folder + "\\" + file[1]
+		#for Nara
+		#new_path = package_folder + "\\" + file[0]
+		if os.path.isfile(new_path) == False:
+			file_obj = Image.open(current_path)
+			width, height = file_obj.width, file_obj.height
+			#print(current_path)
+			file_obj = file_obj.resize((int(width * shrink_factor), int(height * shrink_factor)), Image.ANTIALIAS)
+			file_obj.save(package_folder + "\\" + file[1], optimize = True, quality = quality_factor)
+			#for NARA
+			#file_obj.save(package_folder + "\\" + file[0], optimize = True, quality = quality_factor)
+	else: 
+		folder_contents = os.listdir(current_path)
+		#print(current_path)
+		for key in folder_contents:
+			next_path = current_path + "\\" + key
+			package(input_path, next_path, output_path, stamp)
+		#dictionario = csv_dict(input_path, input_path, {})
+		#csv_write(dictionario, output_path, stamp)
+
+
+
 
 
 ######################################################################
 if __name__ == '__main__':
-	rename_NH(NH_rename_path, 'Belknap-Cheshire', '1870')
-
-	#dictionario = csv_dict(test, test, {})
-	#csv_write(dictionario, package_path, 'test')
-	#rename(lib_scan_output_tiff, 'L')	
-	#dictionario = csv_dict(lib_scan_output_tiff, lib_scan_output_tiff, {})
-	#csv_write(dictionario, package_path, package_list[2])
 	
-	#for i in range(len(package_list)):
-		#dictionario = csv_dict(output_path_list[i], output_path_list[i], {})
-		#csv_write(dictionario, package_path, package_list[i])
-		#rename(output_path_list[i], file_stamp[i])
-		#no_county_folder(output_path_list[i], output_path_list[i], output_path_final_list[i])
-		#print(package_list[i], 'complete')
+	package(Famsearch_output, Famsearch_output, package_folder, 'F')
+
+	folder_list = os.listdir(package_folder)
+	for i in range(len(folder_list)):
+		if folder_list[i].endswith('F'):
+			input_path = package_folder + "\\" + folder_list[i]
+			dictionario = csv_dict(input_path, input_path, {})
+			csv_write(dictionario, input_path, 'F')
+	
+
+		
+
 	
