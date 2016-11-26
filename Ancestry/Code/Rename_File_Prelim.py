@@ -20,7 +20,7 @@ two_slice = .6
 threshold = .08
 
 input_path = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\ancestry\Input\\ancestry_downloads_copy"
-output_path = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\ancestry\\Output"
+output_path = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\ancestry\\Output_final"
 
 test_input = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\ancestry\\Input\\ancestry_downloads_copy\\california\\industry\\1850\\el dorado"
 test_input_2 = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\ancestry\\Input\\ancestry_downloads_copy\\iowa\\1850\\Appanoose"
@@ -66,12 +66,13 @@ def populate(dictionary, current_path):
 			rel_path = os.path.relpath(current_path, input_path)
 			old_path = current_path + "\\" + key
 			if os.path.isdir(old_path):
-				print(old_path)
+				#print(old_path)
 				next_path = old_path
 				populate(dictionary[key], next_path)
 				continue
 			file_list = rel_path.split("\\")
 			file_list.append(key)
+			#print(file_list)
 			
 			#print(file_list)
 			#California exception - eliminate township and Industry folder for consistency
@@ -85,7 +86,7 @@ def populate(dictionary, current_path):
 			file_num = file_list[3]
 
 			new_dir = output_path 
-			for i in [state, file_list[1], county]:
+			for i in [state, file_list[1]]:
 				new_dir = new_dir + "\\" + i
 				if os.path.isdir(new_dir) == False:
 					os.makedirs(new_dir)
@@ -94,7 +95,7 @@ def populate(dictionary, current_path):
 			if state == 'maine':
 				file_num = file_list[-1]
 
-			#another maine idiosyncracy -- see 1880 sagadohoc, 
+			#This is important -- all the file numbers are the same for a county, year file, only the number after - is different
 			if '-' in file_num:
 				file_num_final = file_num.split("-")
 			else:
@@ -104,16 +105,21 @@ def populate(dictionary, current_path):
 			#except IndexError:
 				#print(file_list)
 				#return
-			#print(file)
+		
+			#print(states[state], file[1])
 			
 			new_path = new_dir + "\\" + file
 
 
-			#other normal: "D:\Dropbox (Hornbeck Research)\MFG Project\manuscript_database\ancestry\Input\ancestry_downloads_copy\massachusetts\1870\Bristol\Acushnet_31644_217903-00085.jpg"
-			# when time, add a line preventing duplicated from being transferred twice e.g if already there, don't shutil
-			#print(old_path, '\n', new_path)
-			format_img(old_path, new_path)
-			#shutil.copy(old_path, new_path)
+			#11/21/16 Just want NE 1880; adding if statement:
+			if states[state] == 'NE' and year == '8':
+				img = Image.open(old_path)
+				file_path, filetype = os.path.splitext(new_path)
+				#if os.path.isfile(file_path + "_A" + '.jpg') == False:
+				img.save(file_path + "_A" + '.jpg')
+			#11/21/16 Just want NE 1880; commenting out format_img
+			#format_img(old_path, new_path)
+			
 	else:
 		for key in keys:
 			next_path = current_path + "\\" + key
@@ -126,27 +132,23 @@ def populate(dictionary, current_path):
 
 
 
-
 def format_img(old_path, new_path):
-	with Image(filename = old_path) as img:
-		width = img.width
-		height = img.height
-		if width > height: #this is just a baseline criteria for determining if doc has two pages
-			img.format = 'jpeg'
-			width_one = one_slice * width
-			width_two = two_slice * width
-			image_one = img[int(width_one):width, 0:height]
-			image_two = img[0:int(width_two), 0:height]
-			transfer_path = new_path.rsplit("\\", 1)
-			#extract file extension
-			filename, filetype = os.path.splitext(transfer_path[1])
-			image_one.save(filename = transfer_path[0] + "\\" + filename + '_' + '2half' + '.jpg') #we need to check save also take path, not just filename
-			image_two.save(filename = transfer_path[0] + "\\" + filename + '_' + '1half' + '.jpg')
-		else:
-			img.format = 'jpeg'
-			file_path, filetype = os.path.splitext(new_path)
-			img.save(filename = file_path + '.jpg')
-			#shutil.copy(old_path, new_path)
+	img = Image.open(old_path)
+	width, height  = img.size
+	if width > height and abs(float(width - height))/float(height) > threshold:
+		transfer_path = new_path.rsplit("\\", 1)
+		filename, filetype = os.path.splitext(transfer_path[1])
+
+		width_one = one_slice * width
+		width_two = two_slice * width
+		image_one, image_two = img, img
+		if os.path.isfile(transfer_path[0] + "\\" + filename + '_' + '2half' + '.jpg') == False:
+			image_one.crop((int(width_one), 0, width, height)).save(transfer_path[0] + "\\" + filename + '_' + '2half' + "_A" + '.jpg')
+			image_two.crop((0, 0, int(width_two), height)).save(transfer_path[0] + "\\" + filename + '_' + '1half' + "_A" + '.jpg')
+	else: 
+		file_path, filetype = os.path.splitext(new_path)
+		if os.path.isfile(file_path + "_A" + '.jpg') == False:
+			img.save(file_path + "_A" + '.jpg')
 
 ####################################################csv_write and csv_dict have been moved to general code###################################################################
 
@@ -214,10 +216,11 @@ def csv_package(current_path, package_path):
 
 ######################################################################
 if __name__ == '__main__':
-	#dictionary = collect(input_path)
-	#populate(dictionary, input_path)
-	dictionario = csv_dict(output_path, package_path, {})
-	csv_write(dictionario, package_path)
+	dictionary = collect(input_path)
+	print(list(dictionary.keys()))
+	populate(dictionary, input_path)
+	#dictionario = csv_dict(output_path, package_path, {})
+	#csv_write(dictionario, package_path)
 
 
 
