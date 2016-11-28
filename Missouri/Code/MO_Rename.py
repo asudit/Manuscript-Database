@@ -7,6 +7,7 @@ from wand.image import Image
 
 one_slice = .4
 two_slice = .6
+threshold = .08
 
 input_path = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\MO\\Input\\Missouri_copy"
 output_path = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\MO\\Output"
