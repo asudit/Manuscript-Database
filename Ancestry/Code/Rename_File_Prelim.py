@@ -22,7 +22,8 @@ threshold = .08
 input_path = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\ancestry\Input\\ancestry_downloads_copy"
 output_path = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\ancestry\\Output_final"
 regenerate_output_path = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\ancestry\\Regenerate_output"
-metadata_csv = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\ancestry\\Temp\\IA_8_A_metadata.csv"
+metadata_csv = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\ancestry\\Temp\\NE_7_A_metadata.csv"
+#"D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\ancestry\\Temp\\IA_8_A_metadata.csv"
 
 test_input = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\ancestry\\Input\\ancestry_downloads_copy\\california\\industry\\1850\\el dorado"
 test_input_2 = "D:\\Dropbox (Hornbeck Research)\\MFG Project\\manuscript_database\\ancestry\\Input\\ancestry_downloads_copy\\iowa\\1850\\Appanoose"
@@ -167,11 +168,12 @@ def bad_cut(old_path, new_path, filename, state, year, bad_cut_list, empty_list,
 	new_file2_stamped = filename + "_" + '2half' + underscore_stamp + '.jpg'
 	new_file2 = filename + "_" + '2half' + '.jpg'
 	#if 'IA' in filename and '8' in filename:
-		#print(new_file0, new_file1, new_file2)
+	#print(new_file1)
 
-	if new_file1  in bad_cut_list:
-		for i in [(new_file1, new_file1_stamped), (new_file2, new_file2_stamped)]:
+	for i in [(new_file1, new_file1_stamped), (new_file2, new_file2_stamped)]:
+		if i[0] in bad_cut_list:
 			#make list of bad files shorter once processes
+			
 			bad_cut_list.remove(i[0])
 			#delete file from output folder
 			if os.path.isfile(transfer_path[0] + "\\" + i[1]):
